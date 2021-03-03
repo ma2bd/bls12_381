@@ -62,6 +62,15 @@ version = "1.4"
 default-features = false
 optional = true
 
+[dependencies.serde]
+version = "1.0"
+features = ["derive"]
+optional = true
+default-features = false
+
+[dev-dependencies.serde_test]
+version = "1.0"
+
 [features]
 default = ["groups", "pairings", "alloc", "bits"]
 bits = ["ff/bits"]
