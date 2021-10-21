@@ -1231,10 +1231,10 @@ mod serde_support {
         where
             S: Serializer,
         {
-            use serde::ser::SerializeTuple;
-            let mut tup = serializer.serialize_tuple(96)?;
+            use serde::ser::SerializeTupleStruct;
+            let mut tup = serializer.serialize_tuple_struct("G2", 96)?;
             for byte in self.to_compressed().iter() {
-                tup.serialize_element(byte)?;
+                tup.serialize_field(byte)?;
             }
             tup.end()
         }
@@ -1276,7 +1276,7 @@ mod serde_support {
                 }
             }
 
-            deserializer.deserialize_tuple(96, G2AffineVisitor)
+            deserializer.deserialize_tuple_struct("G2", 96, G2AffineVisitor)
         }
     }
 
@@ -2226,10 +2226,13 @@ fn test_affine_serde_serialization() {
     let g = G2Affine::generator();
     let raw_compressed_bytes = g.to_compressed();
 
-    let expected_tokens = std::iter::once(Token::Tuple { len: 96 })
-        .chain(raw_compressed_bytes.iter().map(|&b| Token::U8(b)))
-        .chain(std::iter::once(Token::TupleEnd))
-        .collect::<alloc::vec::Vec<_>>();
+    let expected_tokens = std::iter::once(Token::TupleStruct {
+        name: "G2",
+        len: 96,
+    })
+    .chain(raw_compressed_bytes.iter().map(|&b| Token::U8(b)))
+    .chain(std::iter::once(Token::TupleStructEnd))
+    .collect::<alloc::vec::Vec<_>>();
 
     assert_tokens(&g, &expected_tokens);
 }
@@ -2242,10 +2245,13 @@ fn test_projective_serde_serialization() {
     let g = G2Projective::generator();
     let raw_compressed_bytes = G2Affine::from(g).to_compressed();
 
-    let expected_tokens = std::iter::once(Token::Tuple { len: 96 })
-        .chain(raw_compressed_bytes.iter().map(|&b| Token::U8(b)))
-        .chain(std::iter::once(Token::TupleEnd))
-        .collect::<alloc::vec::Vec<_>>();
+    let expected_tokens = std::iter::once(Token::TupleStruct {
+        name: "G2",
+        len: 96,
+    })
+    .chain(raw_compressed_bytes.iter().map(|&b| Token::U8(b)))
+    .chain(std::iter::once(Token::TupleStructEnd))
+    .collect::<alloc::vec::Vec<_>>();
 
     assert_tokens(&g, &expected_tokens);
 }

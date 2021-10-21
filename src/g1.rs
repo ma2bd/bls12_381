@@ -1066,10 +1066,10 @@ mod serde_support {
         where
             S: Serializer,
         {
-            use serde::ser::SerializeTuple;
-            let mut tup = serializer.serialize_tuple(48)?;
+            use serde::ser::SerializeTupleStruct;
+            let mut tup = serializer.serialize_tuple_struct("G1", 48)?;
             for byte in self.to_compressed().iter() {
-                tup.serialize_element(byte)?;
+                tup.serialize_field(byte)?;
             }
             tup.end()
         }
@@ -1111,7 +1111,7 @@ mod serde_support {
                 }
             }
 
-            deserializer.deserialize_tuple(48, G1AffineVisitor)
+            deserializer.deserialize_tuple_struct("G1", 48, G1AffineVisitor)
         }
     }
 
@@ -1786,10 +1786,13 @@ fn test_affine_serde_serialization() {
     let g = G1Affine::generator();
     let raw_bytes = g.to_compressed();
 
-    let expected_tokens = std::iter::once(Token::Tuple { len: 48 })
-        .chain(raw_bytes.iter().map(|&b| Token::U8(b)))
-        .chain(std::iter::once(Token::TupleEnd))
-        .collect::<alloc::vec::Vec<_>>();
+    let expected_tokens = std::iter::once(Token::TupleStruct {
+        name: "G1",
+        len: 48,
+    })
+    .chain(raw_bytes.iter().map(|&b| Token::U8(b)))
+    .chain(std::iter::once(Token::TupleStructEnd))
+    .collect::<alloc::vec::Vec<_>>();
 
     assert_tokens(&g, &expected_tokens);
 }
@@ -1802,10 +1805,26 @@ fn test_projective_serde_serialization() {
     let g = G1Projective::generator();
     let raw_bytes = G1Affine::from(g).to_compressed();
 
-    let expected_tokens = std::iter::once(Token::Tuple { len: 48 })
-        .chain(raw_bytes.iter().map(|&b| Token::U8(b)))
-        .chain(std::iter::once(Token::TupleEnd))
-        .collect::<alloc::vec::Vec<_>>();
+    let expected_tokens = std::iter::once(Token::TupleStruct {
+        name: "G1",
+        len: 48,
+    })
+    .chain(raw_bytes.iter().map(|&b| Token::U8(b)))
+    .chain(std::iter::once(Token::TupleStructEnd))
+    .collect::<alloc::vec::Vec<_>>();
+
+    assert_tokens(&g, &expected_tokens);
+
+    let g = G1Projective::identity();
+    let raw_bytes = G1Affine::from(g).to_compressed();
+
+    let expected_tokens = std::iter::once(Token::TupleStruct {
+        name: "G1",
+        len: 48,
+    })
+    .chain(raw_bytes.iter().map(|&b| Token::U8(b)))
+    .chain(std::iter::once(Token::TupleStructEnd))
+    .collect::<alloc::vec::Vec<_>>();
 
     assert_tokens(&g, &expected_tokens);
 }

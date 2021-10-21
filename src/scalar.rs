@@ -800,10 +800,10 @@ mod serde_support {
         where
             S: Serializer,
         {
-            use serde::ser::SerializeTuple;
-            let mut tup = serializer.serialize_tuple(32)?;
+            use serde::ser::SerializeTupleStruct;
+            let mut tup = serializer.serialize_tuple_struct("Scalar", 32)?;
             for byte in self.to_bytes().iter() {
-                tup.serialize_element(byte)?;
+                tup.serialize_field(byte)?;
             }
             tup.end()
         }
@@ -845,7 +845,7 @@ mod serde_support {
                 }
             }
 
-            deserializer.deserialize_tuple(32, ScalarVisitor)
+            deserializer.deserialize_tuple_struct("Scalar", 32, ScalarVisitor)
         }
     }
 }
@@ -1322,10 +1322,13 @@ fn test_serde_serialization() {
     let s = R;
     let raw_bytes = s.to_bytes();
 
-    let expected_tokens = std::iter::once(Token::Tuple { len: 32 })
-        .chain(raw_bytes.iter().map(|&b| Token::U8(b)))
-        .chain(std::iter::once(Token::TupleEnd))
-        .collect::<alloc::vec::Vec<_>>();
+    let expected_tokens = std::iter::once(Token::TupleStruct {
+        name: "Scalar",
+        len: 32,
+    })
+    .chain(raw_bytes.iter().map(|&b| Token::U8(b)))
+    .chain(std::iter::once(Token::TupleStructEnd))
+    .collect::<alloc::vec::Vec<_>>();
 
     assert_tokens(&s, &expected_tokens)
 }
